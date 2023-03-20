@@ -30,7 +30,7 @@ class TCP:
         self.__hostname = hostname
         self.__port = port
         self.__buffsize = buffsize
-        self.__address = (self.hostname, self.port)
+        self.__address = (self.__hostname, self.__port)
         # Define the socket
         self.__connection_socket = socket(AF_INET, SOCK_STREAM)
 
@@ -44,7 +44,7 @@ class TCP:
         self.__hostname = hostname
 
     def get_port(self):
-        return self.port
+        return self.__port
 
     def set_port(self, port):
         self.__port = port
@@ -59,22 +59,39 @@ class TCP:
         return self.__address
 
     def bind(self):
-        self.__connection_socket.bind(self.__ADDRESS)
+        self.__connection_socket.bind(self.__address)
         self.__connection_socket.listen(5)
 
 
 class Client(TCP):
 
-    def __init__(self):
-        super().__init__(hostname, port, buffsize)
+    def __init__(self, message):
+        super().__init__()
         self.__connection_socket = socket(AF_INET, SOCK_STREAM)
+        self.__message = message
 
     def establish_connection(self):
         self.__connection_socket.connect(TCP.get_address(self))
 
+    def receive_message(self):
+        return self.__connection_socket.recv(TCP.get_buffsize(self).decode())
+
+    # This can probably be moved to TCP
+    def send_message(self, message):
+        self.__message = message
+        self.__connection_socket.send(message.encode())
+
+    # This can probably be moved to TCP
+    def terminate_connection(self):
+        self.__connection_socket.close()
 
 
+class Server(TCP):
+
+    def __init__(self, message):
+        super().__init__()
+        self.__connection_socket = socket(AF_INET, SOCK_STREAM)
+        self.__mesage = message
 
 
-
-
+print(help(Client))
