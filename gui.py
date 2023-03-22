@@ -23,6 +23,7 @@ class Application(Tk):
         self.geometry(f"700x650+900+350")
         # keep geometry 700x650
         # self.configure(background='#f78d63')
+        self.resizable(False, False)
 
         # Use built-in style 'classic' for aesthetics
         self.style = ttk.Style(self)
@@ -53,6 +54,7 @@ class Application(Tk):
             starting_frame.grid(row=0, column=0, sticky='nsew')
 
         self.display_frame(AccountPage)
+        print(self.pages)
 
     def display_frame(self, cont):
         frame = self.pages[cont]
