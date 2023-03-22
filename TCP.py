@@ -71,31 +71,26 @@ class TCP:
 
 class Client(TCP):
 
-    def __init__(self, hostname, port, buffsize):
+    def init(self, hostname, port, buffsize):
         super().__init__(hostname, port, buffsize)
-        self.__connection_socket = socket(AF_INET, SOCK_STREAM)
 
     def establish_connection(self):
-        sock = self.__connection_socket
-        sock.connect(TCP.get_address(self))
-
-    # This can probably be moved to TCP
-    def terminate_connection(self):
-        self.__connection_socket.close()
+        self.get_socket().connect(self.get_address())
 
     def client_run(self):
-
         self.establish_connection()
 
         while True:
-            response = self.__connection_socket.recv(1024).decode()
+            response = self.get_socket().recv(self.get_buffsize()).decode()
             print(response)
 
             message = input("Enter message: ")
             if message == 'end':
                 break
             else:
-                self.send_message(message)
+                self.get_socket().send(message.encode())
+
+        self.get_socket().close()
 
 
 class Server(TCP):

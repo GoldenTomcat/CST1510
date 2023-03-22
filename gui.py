@@ -1,4 +1,3 @@
-import tkinter as tk
 from tkinter import *
 from tkinter import ttk
 
@@ -28,11 +27,6 @@ class Application(Tk):
         # Use built-in style 'classic' for aesthetics
         self.style = ttk.Style(self)
         self.style.theme_use('classic')
-
-        # Created a style using ttk for a purple background
-        # TODO: Utilise the style and probably change the colour
-        master_style = ttk.Style()
-        master_style.configure("Window_Styles.TFrame", background='Purple')
 
         # Create a master container spanning the whole window. Everything goes in here
         master_container = Frame(self)
@@ -84,7 +78,11 @@ class AccountPage(ttk.Frame):
 class PortfolioView(ttk.Frame):
 
     def __init__(self, master, controller):
-        super().__init__(master)
+        super().__init__(master, style='Window_Styles.TFrame')
+
+        # Define style for this ttk frames
+        master_style = ttk.Style()
+        master_style.configure("Window_Styles.TFrame", background='orange')
         self.pad_options = {'row': 0, 'column': 6, 'padx': 0, 'pady': 10, 'sticky': 'ew'}
         title = Label(self, text='Portfolio', font=TITLE_FONT)
         title.grid(**self.pad_options)
