@@ -66,7 +66,7 @@ class TCP:
 
     def send_message(self, message):
         self.__message = message
-        self.__connection_socket.send(message.encode())
+        self.get_socket().send(message.encode())
 
 
 class Client(TCP):
