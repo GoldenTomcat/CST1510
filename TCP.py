@@ -1,4 +1,6 @@
 from socket import *
+import threading
+from database import *
 
 # HOST = 'Localhost'
 #
@@ -62,7 +64,7 @@ class TCP:
         return self.__address
 
     def receive_message(self):
-        return self.__connection_socket.recv(TCP.get_buffsize(self)).decode()
+        return self.get_socket().recv(self.get_buffsize()).decode()
 
     def send_message(self, message):
         self.__message = message
@@ -84,6 +86,7 @@ class Client(TCP):
             response = self.get_socket().recv(self.get_buffsize()).decode()
             print(response)
 
+            # message = input("Enter message: ")
             message = input("Enter message: ")
             if message == 'end':
                 break
@@ -117,11 +120,53 @@ class Server(TCP):
                 message = client.recv(TCP.get_buffsize(self)).decode()
                 if not message:
                     break
+                #accounts.set_query(message)
+                print(message)
+                print(type(message))
+                return message
+
+                # if message == "CREATE ACCOUNT":
+                #     AccountDatabase.set_query(INSERT_ACCOUNT)
+                # elif message == "LOGIN":
+                #
+                #     query = f"SELECT EXISTS(SELECT * FROM accounts WHERE username = '{username}' " \
+                #             f"AND password = '{password}');"
+                # elif message == 'MONEY IN':
+                #     pass
+                # elif message == 'MONEY OUT':
+                #     pass
+                # elif message == 'PORTFOLIO VIEW':
+                #     pass
+                # elif message == 'INVEST':
+                #     pass
+
                 print(f"{str(address)} says {str(message)}")
-                message = input("send data: ")
-                client.send(message.encode())
+                message = accounts.custom_command(message)
+                print(type(message))
+                #message = input("send data: ")
+                client.send(str(message).encode())
 
             client.close()
 
+
+def main():
+    accounts.create_database('accounts')
+    # TODO: Limit accounts in gui to params of the sql table i.e max 20 char for name
+    create_table_accounts = "CREATE TABLE accounts(accountId VARCHAR(20) NOT NULL, username VARCHAR(20) NOT NULL, " \
+                            "password VARCHAR (20) NOT NULL, startMoney int NOT NULL);"
+
+    accounts.set_query(create_table_accounts)
+    print(accounts.get_query())
+
+    accounts.create_table()
+
+    # accounts.custom_command("SHOW DATABASES")
+
+
+if __name__ == '__main__':
+    accounts = AccountDatabase('localhost', 'root', '1234')
+    server = Server('localhost', 5000, 1024)
+    main()
+    server.run()
 
 #print(help(Client))

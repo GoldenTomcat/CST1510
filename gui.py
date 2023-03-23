@@ -1,7 +1,7 @@
 from tkinter import *
 from tkinter import ttk
 from TCP import Client
-from threads import Threading
+from threads import *
 
 # Constants for font style + TCP
 TITLE_FONT = ("Arial", 28)
@@ -79,19 +79,39 @@ class LoginPage(ttk.Frame):
         account_frame = Frame(self, width=100, height=50, bg='pink')
         account_frame.pack(**self.pad_options)
 
-        user_name_entry = Entry(account_frame)
-        password_entry = Entry(account_frame, show="*")
+        self.login_username = StringVar()
+        self.login_password = StringVar()
+
+        user_name_entry = Entry(account_frame, textvariable=self.login_username)
+        password_entry = Entry(account_frame, show="*", textvariable=self.login_password)
         user_name_entry.pack()
 
         password_entry.pack()
 
+    def login_button_check(self, controller):
+        username = self.login_username.get()
+        password = self.login_password.get()
+        query = f"SELECT EXISTS(SELECT * FROM accounts WHERE username = '{username}' " \
+                f"AND password = '{password}');"
+
+        client.send_message(query)
+        # TODO: fix the below
+        client_response = client.receive_message()
+
+        if client_response == '1':
+            controller.display_frame(PortfolioView)
+        else:
+            # TODO: Make popup box for login details error
+            print("Enter correct login details")
+
 
 class AccountCreation(ttk.Frame):
 
+    """TTK Frame for creation of account"""
     def __init__(self, master, controller):
         super().__init__(master, style='Window_Styles.TFrame')
 
-        self.name_var = StringVar()
+        self.starting_money_var = StringVar()
         self.username_var = StringVar()
         self.password_var = StringVar()
 
@@ -104,29 +124,34 @@ class AccountCreation(ttk.Frame):
         self.frame_options = {'master': self, 'width': 100, 'height': 50, 'bg': 'pink', 'padx': 10, 'pady': 10}
 
         # Create a LabelFrame for each field then use a loop to pack them
-        names_frame = LabelFrame(**self.frame_options, text='Name')
+        starting_money_frame = LabelFrame(**self.frame_options, text='Money to invest')
         username_frame = LabelFrame(**self.frame_options, text='Username')
         password_frame = LabelFrame(**self.frame_options, text='Password')
-        frame_list = [names_frame, username_frame, password_frame]
+        frame_list = [starting_money_frame, username_frame, password_frame]
         for frame in frame_list:
             frame.pack()
 
         # Create an entry for each field, use a loop to pack them
-        fname_entry = Entry(names_frame, textvariable=self.name_var)
+        starting_money_entry = Entry(starting_money_frame, textvariable=self.starting_money_var)
         username_entry = Entry(username_frame, textvariable=self.username_var)
         password_enrtry = Entry(password_frame, textvariable=self.password_var, show='*')
-        entry_list = [fname_entry, username_entry, password_enrtry]
+        entry_list = [starting_money_entry, username_entry, password_enrtry]
         for entry in entry_list:
             entry.pack()
 
         # TODO: Create account button needs to send account info to server
         # Buttons to create the account and to go back.
         create_account = ttk.Button(self, text='CREATE', command=lambda: self.send_account_data())
-        go_back = ttk.Button(self, text='Go Back', command=lambda: controller.display_frame(PortfolioView))
+        go_back = ttk.Button(self, text='Go Back', command=lambda: controller.display_frame(LoginPage))
         create_account.pack()
         go_back.pack(side=BOTTOM, pady=10, padx=10)
 
     def send_account_data(self):
+        username = self.username_var
+        password = self.password_var
+        start_cash = self.starting_money_var
+        account_id =
+        query = f'INSERT INTO accounts (accountId, username, password, startMoney) values (}'
         client.send_message("CREATE ACCOUNT")
 
 
@@ -165,5 +190,5 @@ def main():
 if __name__ == '__main__':
     client = Client('localhost', 5000, 1024)
     # client.client_run()
-    Threading(client.client_run(), True).start_thread()
+    #Threading(client.client_run(), True).start_thread()
     main()

@@ -14,8 +14,8 @@ class Threading:
         self.thread.daemon = flag
 
     def start_thread(self):
-        self.thread.start()
         """Start thread method. Starts the thread on the Target process."""
+        self.thread.start()
 
 
 # threading.Thread.daemon = True
