@@ -1,6 +1,7 @@
 from tkinter import *
 from tkinter import ttk
 from TCP import Client
+from threads import Threading
 
 # Constants for font style + TCP
 TITLE_FONT = ("Arial", 28)
@@ -152,7 +153,17 @@ class InvestmentPage(ttk.Frame):
         title.grid(**self.pad_options)
 
 
-if __name__ == '__main__':
+def gui_app():
     app = Application()
-    client = Client('localhost', 5000, 1024)
     app.mainloop()
+
+
+def main():
+    Threading(gui_app(), True).start_thread()
+
+
+if __name__ == '__main__':
+    client = Client('localhost', 5000, 1024)
+    # client.client_run()
+    Threading(client.client_run(), True).start_thread()
+    main()
