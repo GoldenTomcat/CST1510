@@ -1,13 +1,12 @@
 from tkinter import *
 from tkinter import ttk
+from tkinter import messagebox
 from TCP import Client
 from threads import *
 import random
 
 # Constants for font style + TCP
 TITLE_FONT = ("Arial", 28)
-HOST = 'Localhost'
-PORT = 5001
 
 
 class Application(Tk):
@@ -85,6 +84,7 @@ class LoginPage(ttk.Frame):
 
         self.login_username = StringVar()
         self.login_password = StringVar()
+        self.username_get = self.login_username.get()
 
         user_name_entry = Entry(account_frame, textvariable=self.login_username)
         password_entry = Entry(account_frame, show="*", textvariable=self.login_password)
@@ -93,7 +93,9 @@ class LoginPage(ttk.Frame):
         password_entry.pack()
 
     def login_button_check(self, controller):
+        global username
         username = self.login_username.get()
+
         password = self.login_password.get()
         query = f"SELECT EXISTS(SELECT * FROM accounts WHERE username = '{username}' " \
                 f"AND password = '{password}');"
@@ -105,11 +107,12 @@ class LoginPage(ttk.Frame):
             controller.display_frame(PortfolioView)
         else:
             print("Incorrect Login details")
+            messagebox.showinfo("Bad login", "Bad Login Details")
 
 
 class AccountCreation(ttk.Frame):
-
     """TTK Frame for creation of account"""
+
     def __init__(self, master, controller):
         super().__init__(master, style='Window_Styles.TFrame')
 
@@ -141,7 +144,6 @@ class AccountCreation(ttk.Frame):
         for entry in entry_list:
             entry.pack()
 
-        # TODO: Create account button needs to send account info to server
         # Buttons to create the account and to go back.
         create_account = ttk.Button(self, text='CREATE', command=lambda: self.send_account_data())
         go_back = ttk.Button(self, text='Go Back', command=lambda: controller.display_frame(LoginPage))
@@ -153,7 +155,6 @@ class AccountCreation(ttk.Frame):
         username = self.username_var.get()
         password = self.password_var.get()
         start_cash = self.starting_money_var.get()
-        #account_id =
         query = f"INSERT INTO accounts (accountId, username, password, startMoney) values " \
                 f"({account_id}, '{username}', '{password}', {start_cash})"
         client.client_run(query)
@@ -164,22 +165,64 @@ class PortfolioView(ttk.Frame):
     def __init__(self, master, controller):
         super().__init__(master, style='Window_Styles.TFrame')
 
+        self.account_id = StringVar()
+
         # Define style for this ttk frames
         master_style = ttk.Style()
         master_style.configure("Window_Styles.TFrame", background='orange')
-        self.pad_options = {'row': 0, 'column': 6, 'padx': 0, 'pady': 10, 'sticky': 'ew'}
+        self.pad_options = {'padx': 10, 'pady': 10}
         title = Label(self, text='Portfolio', font=TITLE_FONT)
-        title.grid(**self.pad_options)
+        title.pack(**self.pad_options)
+
+        self.frame_options = {'master': self, 'width': 200, 'height': 350, 'bg': 'pink', 'padx': 10, 'pady': 10}
+        self.transactions_frame = LabelFrame(**self.frame_options, text='Transactions Key: (Transaction ID, AccountID, '
+                                                                        'currency, date of purchase, quantity, cost')
+        self.transactions_frame.pack(fill='both')
+        self.details = Message(self.transactions_frame, text='Refresh me!',
+                               font=('arial', 10), aspect=150, width=100)
+        self.details.pack()
+
+        account_id_frame = LabelFrame(self, width=150, height=50, bg='pink',
+                                      **self.pad_options, text='Enter Account number')
+        account_id_frame.pack()
+        account_id_entry = Entry(account_id_frame, textvariable=self.account_id)
+        account_id_entry.pack(**self.pad_options)
+
+        refresh_button = ttk.Button(self, text='Refresh', command=lambda: self.refresh_button_press())
+        refresh_button.pack(**self.pad_options)
+
         invest = ttk.Button(self, text='Invest', command=lambda: controller.display_frame(InvestmentPage))
-        invest.grid(row=5, column=1, padx=0, pady=10, sticky='ew')
+        invest.pack(**self.pad_options, side=BOTTOM)
+
+    def refresh_button_press(self):
+        account_id = self.account_id.get()
+        print("ACCOUNT ID DEBUG:", account_id)
+        query = f"SELECT * FROM transactions WHERE accountId='{account_id}';"
+        print("QUERY DEBUG:", query)
+        reply = client.client_run(query)
+        print(f"DEBUG REPLY: {reply}")
+        print("DEBUG", client)
+        self.details.destroy()
+        self.details = Message(self.transactions_frame, text=reply,
+                               font=('arial', 10), aspect=250)
+        self.details.pack()
 
 
 class InvestmentPage(ttk.Frame):
-    def __init__(self, master, controller):
+    def __init__(self, master, controller, style='Window_Styles.TFrame'):
         super().__init__(master)
-        self.pad_options = {'row': 0, 'column': 6, 'padx': 0, 'pady': 10, 'sticky': 'ew'}
+
+        master_style = ttk.Style()
+        master_style.configure("Window_Styles.TFrame", background='orange')
+
+        self.pad_options = {'padx': 0, 'pady': 10}
         title = Label(self, text='Invest', font=TITLE_FONT)
-        title.grid(**self.pad_options)
+        title.pack(**self.pad_options)
+
+
+        go_back = ttk.Button(self, text='Go Back', command=lambda: controller.display_frame(LoginPage))
+        go_back.pack(side=BOTTOM, pady=10, padx=10)
+
 
 
 def gui_app():
@@ -188,15 +231,15 @@ def gui_app():
 
 
 # def client_networking():
-    # client = Client('localhost', 5000, 1024)
-    #client.client_run()
+# client = Client('localhost', 5000, 1024)
+# client.client_run()
 
 
 def main():
     t1 = gui_app
-    #t2 = client_networking
+    # t2 = client_networking
     threading.Thread(target=t1).start()
-    #threading.Thread(target=t2, daemon=True).start()
+    # threading.Thread(target=t2, daemon=True).start()
 
 
 if __name__ == '__main__':

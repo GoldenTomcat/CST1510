@@ -139,6 +139,11 @@ class Server(TCP):
                     print(f"Does it exist? {str(reply)}")
                     client.send(str(reply).encode())
 
+                elif message[:13] == 'SELECT * FROM':
+                    reply = accounts.custom_command(message)
+                    print("select * from target table: ", reply)
+                    client.send(str(reply).encode())
+
                 #accounts.custom_command(message)
                 if not message:
                     break
@@ -181,11 +186,21 @@ class Scraper:
         prices = self.soup.find_all('div', attrs={'class': 'valuta valuta--light'})
 
         #for name, price in zip(names, prices):
-        x = [name.get_text().replace('\n', '') + price.get_text().replace('\n', '') for name, price in zip(names, prices)]
+        x = [name.get_text().replace('\n', '') + price.get_text().replace('\n', '')
+             for name, price in zip(names, prices)]
             #print(name.get_text() + price.get_text())
         #print(x)
+
+        # TODO: Condense this if possible
         x_stripped = [s.strip() for s in x]
-        print(x_stripped)
+        #print(x_stripped)
+        x_final = [" ".join(i.split()) for i in x_stripped]
+
+        # for i in x_stripped:
+        #     # j = i.replace(' ', '')
+        #     j = " ".join(i.split())
+        #     k.append(j)
+        print(x_final)
 
 
 def scraper():
@@ -200,13 +215,22 @@ def server_runtime():
 def main():
     accounts.create_database('accounts')
     # TODO: Limit accounts in gui to params of the sql table i.e max 20 char for name
-    create_table_accounts = "CREATE TABLE accounts(accountId VARCHAR(20) NOT NULL, username VARCHAR(20) NOT NULL, " \
+    create_table_accounts = "CREATE TABLE accounts(accountId VARCHAR(20) NOT NULL PRIMARY KEY, " \
+                            "username VARCHAR(20) NOT NULL, " \
                             "password VARCHAR (20) NOT NULL, startMoney int NOT NULL);"
+
+    create_table_transactions = "CREATE TABLE transactions(transactionId VARCHAR(5) NOT NULL PRIMARY KEY, " \
+                                "accountId VARCHAR(20) NOT NULL, currency VARCHAR(10), datePurchase VARCHAR(10), " \
+                                "quantity int, cost int, FOREIGN KEY (accountId) REFERENCES accounts(accountId));"
 
     accounts.set_query(create_table_accounts)
     print(accounts.get_query())
-
     accounts.create_table()
+
+    accounts.set_query(create_table_transactions)
+    print(accounts.get_query())
+    accounts.create_table()
+
     t1 = scraper
     t2 = server_runtime
     threading.Thread(target=t1).start()
