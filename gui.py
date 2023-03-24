@@ -62,6 +62,7 @@ class LoginPage(ttk.Frame):
     def __init__(self, master, controller):
         super().__init__(master, style='Window_Styles.TFrame')
         # Container for attached frames
+        self.controller = controller
 
         self.pad_options = {'padx': 10, 'pady': 10, 'side': TOP}
         title = Label(self, text='Login Screen', font=TITLE_FONT)
@@ -74,7 +75,9 @@ class LoginPage(ttk.Frame):
                                            command=lambda: controller.display_frame(AccountCreation))
 
         # TODO: Button should only proceed to login if login details correct. Login box either on page or window.
-        login_button = ttk.Button(self, text='Login', command=lambda: controller.display_frame(PortfolioView))
+        # login_button = ttk.Button(self, text='Login', command=lambda: controller.display_frame(PortfolioView))
+        login_button = ttk.Button(self, text='Login', command=lambda: self.login_button_check(self.controller))
+
         create_account_button.pack(**self.pad_options)
         login_button.pack(**self.pad_options)
         account_frame = Frame(self, width=100, height=50, bg='pink')
@@ -94,16 +97,14 @@ class LoginPage(ttk.Frame):
         password = self.login_password.get()
         query = f"SELECT EXISTS(SELECT * FROM accounts WHERE username = '{username}' " \
                 f"AND password = '{password}');"
-
-        client.send_message(query)
-        # TODO: fix the below
-        client_response = client.receive_message()
-
-        if client_response == '1':
+        reply = client.client_run(query)
+        print(f"DEBUG REPLY: {reply}")
+        print("DEBUG", client)
+        if str(reply) == "(1,)":
+            print("success")
             controller.display_frame(PortfolioView)
         else:
-            # TODO: Make popup box for login details error
-            print("Enter correct login details")
+            print("Incorrect Login details")
 
 
 class AccountCreation(ttk.Frame):

@@ -1,3 +1,4 @@
+import socket
 from socket import *
 import threading
 from database import *
@@ -82,12 +83,17 @@ class Client(TCP):
         self.get_socket().connect(self.get_address())
 
     def client_run(self, message):
-        self.establish_connection()
+        client_sock = socket(AF_INET, SOCK_STREAM)
+        address = ('localhost', 5000)
+        client_sock.connect(address)
+        # print(self.get_socket())
+        # self.establish_connection()
+        # print(self.get_socket())
 
         # while True:
-        self.message = message
-        self.get_socket().send(message.encode())
-        response = self.get_socket().recv(self.get_buffsize()).decode()
+        # self.get_socket().send(message.encode())
+        client_sock.send(message.encode())
+        response = client_sock.recv(self.get_buffsize()).decode()
         print(response)
 
             #message = input("Enter message: ")
@@ -96,8 +102,9 @@ class Client(TCP):
             #     break
             # else:
             #     self.get_socket().send(message.encode())
-
-        self.get_socket().close()
+        # self.get_socket().shutdown(1)
+        client_sock.close()
+        return response
 
 
 class Server(TCP):
@@ -124,12 +131,18 @@ class Server(TCP):
                 message = client.recv(TCP.get_buffsize(self)).decode()
                 if message[:6] == 'INSERT':
                     accounts.insert_record(message)
+                    reply = 'records inserted'
+                    client.send(str(reply).encode())
+
+                elif message[:13] == 'SELECT EXISTS':
+                    reply = accounts.custom_command(message)
+                    print(f"Does it exist? {str(reply)}")
+                    client.send(str(reply).encode())
+
                 #accounts.custom_command(message)
                 if not message:
                     break
                 #accounts.set_query(message)
-                print(message)
-                print(type(message))
 
                 # if message == "CREATE ACCOUNT":
                 #     AccountDatabase.set_query(INSERT_ACCOUNT)
@@ -149,8 +162,9 @@ class Server(TCP):
                 print(f"{str(address)} says {str(message)}")
                 #message = accounts.custom_command(message)
                 print(type(message))
+                # message = 'Received'
                 #message = input("send data: ")
-                client.send(str(message).encode())
+                #client.send(str(reply).encode())
 
             client.close()
 
