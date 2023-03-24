@@ -4,6 +4,7 @@ import threading
 from database import *
 from bs4 import BeautifulSoup
 import requests
+import time
 
 # HOST = 'Localhost'
 #
@@ -147,8 +148,8 @@ class Server(TCP):
                 #accounts.custom_command(message)
                 if not message:
                     break
-                #accounts.set_query(message)
 
+                #accounts.set_query(message)
                 # if message == "CREATE ACCOUNT":
                 #     AccountDatabase.set_query(INSERT_ACCOUNT)
                 # elif message == "LOGIN":
@@ -167,6 +168,8 @@ class Server(TCP):
                 print(f"{str(address)} says {str(message)}")
                 #message = accounts.custom_command(message)
                 print(type(message))
+
+                #client.send(str().encode())
                 # message = 'Received'
                 #message = input("send data: ")
                 #client.send(str(reply).encode())
@@ -186,26 +189,52 @@ class Scraper:
         prices = self.soup.find_all('div', attrs={'class': 'valuta valuta--light'})
 
         #for name, price in zip(names, prices):
-        x = [name.get_text().replace('\n', '') + price.get_text().replace('\n', '')
-             for name, price in zip(names, prices)]
+        #x = [name.get_text().replace('\n', '') + price.get_text().replace('\n', '')
+             # for name, price in zip(names, prices)]
             #print(name.get_text() + price.get_text())
         #print(x)
 
+        # Testing lists seprately
+        coins = [name.get_text().replace('\n', '') for name in names]
+        #print(coins)
+        coins_stripped = [s.strip() for s in coins]
+        prices = [price.get_text().replace('\n', '') for price in prices]
+        prices_stripped = [t.strip() for t in prices]
+        #print(prices)
+        coins_final = [" ".join(i.split()) for i in coins_stripped]
+        prices_final = [" ".join(j.split()) for j in prices_stripped]
+        # print(coins_final)
+        # print(prices_final)
+        top_ten_coins = [coin for coin in coins_final[:10]]
+        top_ten_prices = [price for price in prices_final[:10]]
+        print(top_ten_coins)
+        print(top_ten_prices)
+
+        # for i, j in top_ten_coins, top_ten_prices:
+        #
+        #     query = f"UPDATE coins SET coinName {i}, price {j} WHERE coinName = '{i}'"
+        #     accounts.insert_record(query)
+
+
         # TODO: Condense this if possible
-        x_stripped = [s.strip() for s in x]
+        #x_stripped = [s.strip() for s in x]
         #print(x_stripped)
-        x_final = [" ".join(i.split()) for i in x_stripped]
+        #x_final = [" ".join(i.split()) for i in x_stripped]
 
         # for i in x_stripped:
         #     # j = i.replace(' ', '')
         #     j = " ".join(i.split())
         #     k.append(j)
-        print(x_final)
+        #print(x_final)
 
 
 def scraper():
-    scrape = Scraper("https://coinranking.com")
-    scrape.name_plus_price()
+
+    while True:
+        scrape = Scraper("https://coinranking.com")
+        scrape.name_plus_price()
+        time.sleep(15)
+
 
 def server_runtime():
     server = Server('localhost', 5000, 1024)
@@ -223,6 +252,10 @@ def main():
                                 "accountId VARCHAR(20) NOT NULL, currency VARCHAR(10), datePurchase VARCHAR(10), " \
                                 "quantity int, cost int, FOREIGN KEY (accountId) REFERENCES accounts(accountId));"
 
+    create_table_coins = "CREATE TABLE coins (coinName VARCHAR(10) NOT NULL PRIMARY KEY, price VARCHAR(30));"
+
+
+
     accounts.set_query(create_table_accounts)
     print(accounts.get_query())
     accounts.create_table()
@@ -230,6 +263,22 @@ def main():
     accounts.set_query(create_table_transactions)
     print(accounts.get_query())
     accounts.create_table()
+    accounts.set_query(create_table_coins)
+    print(accounts.get_query())
+    accounts.create_table()
+
+    coins_initial_insert = "INSERT INTO coins (coinName, price) VALUES (%s, %s)"
+    coins_values = [("Bitcoin", "27812.15"),
+                    ("Ethereum", "53454000.00"),
+                    ("Tether USD", "1762.07"),
+                    ("BNB", "21530003.30"),
+                    ("USDC", "1.001")]
+    accounts.set_values(coins_values)
+    accounts.set_query(coins_initial_insert)
+    accounts.insert_many_records()
+    accounts.select_all_from_table("coins")
+    accounts.custom_command("SELECT * FROM coins")
+
 
     t1 = scraper
     t2 = server_runtime

@@ -51,3 +51,8 @@ class AccountDatabase:
     def insert_record(self, query):
         self.cursor.execute(f"{query}")
         self.db.commit()
+
+    def insert_many_records(self):
+        self.cursor.executemany(self.query, self.values)
+        self.db.commit()
+        print(f"{self.cursor.rowcount} tuples inserted")

@@ -93,7 +93,6 @@ class LoginPage(ttk.Frame):
         password_entry.pack()
 
     def login_button_check(self, controller):
-        global username
         username = self.login_username.get()
 
         password = self.login_password.get()
@@ -193,6 +192,8 @@ class PortfolioView(ttk.Frame):
 
         invest = ttk.Button(self, text='Invest', command=lambda: controller.display_frame(InvestmentPage))
         invest.pack(**self.pad_options, side=BOTTOM)
+        go_back = ttk.Button(self, text='Go Back', command=lambda: controller.display_frame(LoginPage))
+        go_back.pack(side=BOTTOM, pady=10, padx=10)
 
     def refresh_button_press(self):
         account_id = self.account_id.get()
@@ -209,20 +210,78 @@ class PortfolioView(ttk.Frame):
 
 
 class InvestmentPage(ttk.Frame):
-    def __init__(self, master, controller, style='Window_Styles.TFrame'):
-        super().__init__(master)
+    def __init__(self, master, controller):
+        super().__init__(master, style='Window_Styles.TFrame')
 
         master_style = ttk.Style()
         master_style.configure("Window_Styles.TFrame", background='orange')
 
-        self.pad_options = {'padx': 0, 'pady': 10}
+        self.buy_ammount = IntVar()
+        self.coin_selection = StringVar()
+        self.account_number = StringVar()
+
+
+        self.pad_options = {'padx': 10, 'pady': 10}
         title = Label(self, text='Invest', font=TITLE_FONT)
         title.pack(**self.pad_options)
+        self.investment_frame = LabelFrame(self, width=150, height=250, bg='pink', text='cryptocurrencies')
+        self.investment_frame.pack(self.pad_options, fill='both')
+        self.message_options = {'master': self.investment_frame, 'font':
+            ('arial', 10), 'aspect': 250}
 
+        self.crypto = Message(**self.message_options, text='Refresh me!')
 
-        go_back = ttk.Button(self, text='Go Back', command=lambda: controller.display_frame(LoginPage))
+        self.crypto.pack(**self.pad_options)
+
+        refresh_button = ttk.Button(self, text='Refresh', command=lambda: self.refresh_button_press())
+        refresh_button.pack(**self.pad_options)
+        buy_frame = LabelFrame(self, width=100, height=250, bg='pink', text='Buying')
+        buy_frame.pack(**self.pad_options)
+        amount_label = Label(buy_frame, text='Amount')
+        amount_label.pack()
+        buy_entry = Entry(buy_frame, textvariable=self.buy_ammount)
+        coin_entry = Entry(buy_frame, textvariable=self.coin_selection)
+        buy_entry.pack(**self.pad_options)
+        coin_label = Label(buy_frame, text='Coin')
+        coin_label.pack(**self.pad_options)
+        coin_entry.pack(**self.pad_options)
+        account_label = Label(buy_frame, text='AccountId')
+        account_label.pack(**self.pad_options)
+        account_entry = Entry(buy_frame, textvariable=self.account_number)
+        account_entry.pack(**self.pad_options)
+        buy_button = ttk.Button(self, text='Buy', command=lambda: self.buy_button())
+        buy_button.pack(**self.pad_options)
+
+        go_back = ttk.Button(self, text='Go Back', command=lambda: controller.display_frame(PortfolioView))
         go_back.pack(side=BOTTOM, pady=10, padx=10)
 
+    def refresh_button_press(self):
+        query = f"SELECT * FROM coins;"
+        print("QUERY DEBUG:", query)
+        reply = client.client_run(query)
+        print(f"DEBUG REPLY: {reply}")
+        print("DEBUG", client)
+
+        self.crypto = Message(self.investment_frame, text=reply,
+                              font=('arial', 10), aspect=250)
+        self.crypto.pack()
+
+        query = f"SELECT * FROM coins"
+        reply = client.client_run(query)
+        print("DEBUG COINS SHOW:", reply)
+        self.coin_info = reply
+
+    def buy_button(self):
+        amount = self.buy_ammount.get()
+        coin = self.coin_selection.get()
+        transaction_id = random.randint(1, 100)
+        account = self.account_number.get()
+        cost = "27812.15"
+        date = "27/03/2022"
+        query = f"INSERT INTO transactions (transactionId, accountId, currency, datePurchase, " \
+                f"quantity, cost) values ({transaction_id}, {account}, '{coin}', '{date}', {amount}, {cost});"
+
+        client.client_run(query)
 
 
 def gui_app():
