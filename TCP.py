@@ -1,6 +1,8 @@
 from socket import *
 import threading
 from database import *
+from bs4 import BeautifulSoup
+import requests
 
 # HOST = 'Localhost'
 #
@@ -79,19 +81,21 @@ class Client(TCP):
     def establish_connection(self):
         self.get_socket().connect(self.get_address())
 
-    def client_run(self):
+    def client_run(self, message):
         self.establish_connection()
 
-        while True:
-            response = self.get_socket().recv(self.get_buffsize()).decode()
-            print(response)
+        # while True:
+        self.message = message
+        self.get_socket().send(message.encode())
+        response = self.get_socket().recv(self.get_buffsize()).decode()
+        print(response)
 
-            # message = input("Enter message: ")
-            message = input("Enter message: ")
-            if message == 'end':
-                break
-            else:
-                self.get_socket().send(message.encode())
+            #message = input("Enter message: ")
+            #message = 'test'
+            # if message == 'end':
+            #     break
+            # else:
+            #     self.get_socket().send(message.encode())
 
         self.get_socket().close()
 
@@ -114,16 +118,18 @@ class Server(TCP):
             print('Waiting for connection......')
             (client, address) = self.__connection_socket.accept()
             print("Connection from" + str(address))
-            client.send("test".encode())
+            #client.send("test_successful".encode())
 
             while True:
                 message = client.recv(TCP.get_buffsize(self)).decode()
+                if message[:6] == 'INSERT':
+                    accounts.insert_record(message)
+                #accounts.custom_command(message)
                 if not message:
                     break
                 #accounts.set_query(message)
                 print(message)
                 print(type(message))
-                return message
 
                 # if message == "CREATE ACCOUNT":
                 #     AccountDatabase.set_query(INSERT_ACCOUNT)
@@ -141,12 +147,40 @@ class Server(TCP):
                 #     pass
 
                 print(f"{str(address)} says {str(message)}")
-                message = accounts.custom_command(message)
+                #message = accounts.custom_command(message)
                 print(type(message))
                 #message = input("send data: ")
                 client.send(str(message).encode())
 
             client.close()
+
+
+class Scraper:
+
+    def __init__(self, target_website):
+        self.target_website = target_website
+        self.target_website = requests.get("https://coinranking.com")
+        self.soup = BeautifulSoup(self.target_website.text, 'html.parser')
+
+    def name_plus_price(self):
+        names = self.soup.find_all('a', attrs={'class': 'profile__link'})
+        prices = self.soup.find_all('div', attrs={'class': 'valuta valuta--light'})
+
+        #for name, price in zip(names, prices):
+        x = [name.get_text().replace('\n', '') + price.get_text().replace('\n', '') for name, price in zip(names, prices)]
+            #print(name.get_text() + price.get_text())
+        #print(x)
+        x_stripped = [s.strip() for s in x]
+        print(x_stripped)
+
+
+def scraper():
+    scrape = Scraper("https://coinranking.com")
+    scrape.name_plus_price()
+
+def server_runtime():
+    server = Server('localhost', 5000, 1024)
+    server.run()
 
 
 def main():
@@ -159,14 +193,17 @@ def main():
     print(accounts.get_query())
 
     accounts.create_table()
-
+    t1 = scraper
+    t2 = server_runtime
+    threading.Thread(target=t1).start()
+    threading.Thread(target=t2).start()
     # accounts.custom_command("SHOW DATABASES")
 
 
 if __name__ == '__main__':
     accounts = AccountDatabase('localhost', 'root', '1234')
-    server = Server('localhost', 5000, 1024)
+    # server = Server('localhost', 5000, 1024)
     main()
-    server.run()
+    # server.run()
 
 #print(help(Client))

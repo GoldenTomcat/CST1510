@@ -1,5 +1,7 @@
 import mysql.connector as mysql
 
+INSERT_ACCOUNT = "INSERT INTO accounts (name, username, password) VALUES (%s, %s, %s, %s)"
+
 
 class AccountDatabase:
 
@@ -42,3 +44,10 @@ class AccountDatabase:
 
     def custom_command(self, query):
         self.cursor.execute(f"{query}")
+        results = self.cursor.fetchall()
+        for result in results:
+            return result
+
+    def insert_record(self, query):
+        self.cursor.execute(f"{query}")
+        self.db.commit()

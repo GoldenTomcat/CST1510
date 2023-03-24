@@ -2,6 +2,7 @@ from tkinter import *
 from tkinter import ttk
 from TCP import Client
 from threads import *
+import random
 
 # Constants for font style + TCP
 TITLE_FONT = ("Arial", 28)
@@ -147,12 +148,14 @@ class AccountCreation(ttk.Frame):
         go_back.pack(side=BOTTOM, pady=10, padx=10)
 
     def send_account_data(self):
-        username = self.username_var
-        password = self.password_var
-        start_cash = self.starting_money_var
-        account_id =
-        query = f'INSERT INTO accounts (accountId, username, password, startMoney) values (}'
-        client.send_message("CREATE ACCOUNT")
+        account_id = random.randint(1, 100)
+        username = self.username_var.get()
+        password = self.password_var.get()
+        start_cash = self.starting_money_var.get()
+        #account_id =
+        query = f"INSERT INTO accounts (accountId, username, password, startMoney) values " \
+                f"({account_id}, '{username}', '{password}', {start_cash})"
+        client.client_run(query)
 
 
 class PortfolioView(ttk.Frame):
@@ -183,12 +186,19 @@ def gui_app():
     app.mainloop()
 
 
+# def client_networking():
+    # client = Client('localhost', 5000, 1024)
+    #client.client_run()
+
+
 def main():
-    Threading(gui_app(), True).start_thread()
+    t1 = gui_app
+    #t2 = client_networking
+    threading.Thread(target=t1).start()
+    #threading.Thread(target=t2, daemon=True).start()
 
 
 if __name__ == '__main__':
     client = Client('localhost', 5000, 1024)
     # client.client_run()
-    #Threading(client.client_run(), True).start_thread()
     main()
